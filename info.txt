@@ -1,0 +1,22 @@
+<---DATABASE--->
+TABLES:
+users:
+[username TEXT UNIQUE][password hash TEXT][e-mail TEXT UNIQUE]
+positions:
+[username TEXT][position TEXT UNIQUE][moves TEXT]
+
+<---ACTIONS--->
+go_to_position
+  Adds position to database if it doesn't exist.
+  params: {position}
+  returns: {position, moves}
+  
+add_move
+  params: {position, move_to_add}
+  returns: {position, moves}
+  
+delete_move
+  params: {position, move_to_delete}
+  returns: {position, moves}
+  
+  

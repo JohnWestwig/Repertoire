@@ -1,0 +1,38 @@
+body {
+	/*background-color: lightgray;*/
+}
+
+nav {
+	height: 40px;
+}
+
+.main {
+	border: 5px ridge brown;
+	border-radius: 5px;
+}
+
+#board {
+	/*Sizing*/
+	height: 500px;
+	width: 500px;
+	/*padding: 10px;*/
+}
+
+#candidates {
+	/*float: right;*/
+	display: inline-block;
+	vertical-align: top;
+	height: 250px;
+}
+
+tr {
+	border: 2px solid lightblue;
+}
+
+th {
+	padding: 0 5px 20px 5px;
+}
+
+caption {
+	caption-side: bottom;
+}

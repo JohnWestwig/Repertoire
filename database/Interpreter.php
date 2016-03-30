@@ -6,6 +6,7 @@ class Interpreter{
 		$this->db = new SQLite3($relative_path);
 	} 
 
+////////////////////////////////----users----//////////////////////////////////
 	public function register_user($username, $email, $password) {
 		return $this->query_send('INSERT INTO users 
 								  (username, email, password)
@@ -18,16 +19,15 @@ class Interpreter{
 									WHERE username = ?', $username);
 		 return ($result['password'] == $password);
 	}
-	
-	public function add_position($username, $position) {
-		return $this->query_send('INSERT OR IGNORE INTO positions
-								  (username, position) VALUES (?, ?)',
-								  $username, $position); 
-	}
+
+//////////////////////////////----positions----////////////////////////////////	
 	public function go_to_position($username, $position) {
+		$this->query_send('INSERT OR IGNORE INTO positions
+					 	   (username, position) VALUES (?, ?)',
+						   $username, $position); 
 		return $this->query_get('SELECT position, moves FROM positions
-					  			 WHERE username = ? AND position = ?', 
-					  			 $username, $position);
+								 WHERE username = ? AND position = ?',
+								 $username, $position);
 	}
 
 	public function add_move($username, $position, $move) {
@@ -58,7 +58,6 @@ class Interpreter{
 							   		  $username, $position);
 		}
 		else return false;
-		
 	}
 
 	private function query_get($query, ...$arguments) {

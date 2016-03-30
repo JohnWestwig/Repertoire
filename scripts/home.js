@@ -6,7 +6,6 @@ var Colors = {
 
 var Actions = {
 	"ADD_MOVE": "add_move",
-	"FOLLOW_MOVE": "follow_move",
 	"DELETE_MOVE": "delete_move",
 	"GO_TO_POSITION": "go_to_position"
 };
@@ -23,7 +22,7 @@ var Images = {
     "b": load_image("Images/b_bishop.png"),
    	"r": load_image("Images/b_rook.png"),
 	"q": load_image("Images/b_queen.png"),
-   	"k": load_image("Images/b_pawn.png"),
+   	"k": load_image("Images/b_king.png"),
    	"P": load_image("Images/w_pawn.png"),
    	"N": load_image("Images/w_knight.png"),
    	"B": load_image("Images/w_bishop.png"),
@@ -33,7 +32,6 @@ var Images = {
 };
 
 /*Initialize constants*/
-var STARTING_POSITION = "rnbqkbnr,pppppppp,________,________,________,________,PPPPPPPP,RNBQKBNR";
 var DARK_COLOR = "#008080";
 var LIGHT_COLOR = "#FFFFFF";
 var HIGHLIGHT_COLOR = "#FF00FF";
@@ -45,45 +43,35 @@ var current_square = {row: -1, col: -1};
 
 /*Board state*/
 var board_state = {
-	color: Colors.WHITE,
-	position: post_process("position", STARTING_POSITION), 
+	position: {board: [['r', 'n', 'b', 'q', 'k', 'b', 'n', 'r'],
+			   		   ['p', 'p', 'p', 'p', 'p', 'p', 'p', 'p'],
+			   		   ['_', '_', '_', '_', '_', '_', '_', '_'],
+			   		   ['_', '_', '_', '_', '_', '_', '_', '_'], 
+			   		   ['_', '_', '_', '_', '_', '_', '_', '_'],
+			   		   ['_', '_', '_', '_', '_', '_', '_', '_'],
+               		   ['P', 'P', 'P', 'P', 'P', 'P', 'P', 'P'],
+			   		   ['R', 'N', 'B', 'Q', 'K', 'B', 'N', 'R']],
+			   to_move: 0,
+			   castle: [1, 1, 1, 1],
+			   en_passant: null,
+			   color: Colors.WHITE},
 	moves: null, 
 	path: null 
 };
 
 /*Startup*/
 $(window).load(function() {
-	SQ_SIZE = $("#board").height() / 8;	
-	data = pre_process({position: board_state.position});
-	draw();
+	SQ_SIZE = $("#board").height() / 8;
+	data = {position: board_state.position};
 	process_action("GO_TO_POSITION", data);
 });
 
 ////////////////////////////////////////////////////////////////////////////////
 //////////////////----Handle server request and response----////////////////////
 ////////////////////////////////////////////////////////////////////////////////
-function pre_process(data) {
-	for (key in data) {
-		var value = data[key];
-		switch(key) {
-			case "position":
-				var position = [];
-				console.log(value);
-				for (var i = 0; i < value.length; i++) {
-					console.log(value[i]);
-					position.push(value[i].join(""));			
-				}
-				data[key] =  position.join(",");
-				break;
-			case "moves":
-				data[key] = value.join(","); 
-		}
-	}
-	return data;
-}
-
 function process_action(action, data) {
 	if (action in Actions) {
+		data = serialize(data);
 		data.action = Actions[action];
 		$.ajax({
 			type: "POST",
@@ -98,34 +86,15 @@ function process_action(action, data) {
 }
 
 function update_client(data) {
-	try {
-		alert(data);
-		data = JSON.parse(data);
-	}
-	catch(e) {
-		alert("ERROR: " + data);
-	} 
+	data = deserialize(data);
+	console.log("Deserialized data:");
+	console.log(data);
 	for (key in data) {
 		if (key in board_state) {
-			board_state[key] = post_process(key, data[key]);
+			board_state[key] = data[key];
 		}
 	}
 	draw();
-}
-
-function post_process(key, value) {
-	switch(key) {
-		case "moves":
-			value.split(",");
-		case "position":
-			return value.split(",").map(function(row) {
-				return row.split("");
-			});
-		case "to_move":
-		case "my_color":
-			return value;
-		default: return null;
-	}		
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -141,21 +110,53 @@ $(document).ready(function() {
 			current_square = new_square;
 		}
 		else if (new_square.row == current_square.row &&
-			new_square.col == current_square.col) {
+			new_square.col == current_square.col) {	
 			current_square = {row: -1, col: -1};
 		} 	
 		else {
-			process_action("FOLLOW_MOVE", {position: board_state.position,
-										   move: "" + current_square.row +
-												 	  current_square.col + 
-												 	  new_square.row + 
-													  new_square.col + ","});
+			var move = [current_square.row, current_square.col,
+						new_square.row, new_square.col];
+			
+			data = {position: generate_position(move)};
+			process_action("GO_TO_POSITION", data);
+			console.log(data.position);
 			current_square = new_square;
 		}
 		draw();
 	});
-	
 });
+////////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////----Moves----//////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
+function is_legal(move) {
+	return true;
+}
+
+function generate_position(move) {
+	if (is_legal(move)) {
+		var new_position = JSON.parse(JSON.stringify(board_state.position));
+		if (board_state.position.board[move[0]][move[1]].toUpperCase == 'P' &&
+			abs(move[2] - move[0]) == 2) {
+			new_position.en_passant = "" + (move[0] + 1) + move[1];	
+		}
+		else {
+			new_position.en_passant = null;
+		}
+		
+		if (board_state.position.board[move[0]][move[1]].toUpperCase == 'K') {
+			new_position.castle = [0, 0, 0, 0];
+		}
+		alert(move);
+		new_position.board[move[2]][move[3]] = 
+			board_state.position.board[move[0]][move[1]];
+		new_position.board[move[0]][move[1]] = '_';
+		new_position.color = board_state.position.color == Colors.WHITE ?
+							 Colors.BLACK : Colors.WHITE;
+		return new_position; 
+	}
+	else return false;
+}
+
 ////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////----Graphics----/////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
@@ -177,7 +178,7 @@ function draw_board() {
 				ctx.fillStyle = HIGHLIGHT_COLOR;
 			}	
 			ctx.fillRect(col * SQ_SIZE, row * SQ_SIZE, SQ_SIZE, SQ_SIZE); 	
-		    let sq = board_state.position[row][col];	
+		    let sq = board_state.position.board[row][col];	
 			if (sq != '_') {
 				ctx.drawImage(Images[sq], col * SQ_SIZE, row * SQ_SIZE,
 							  SQ_SIZE, SQ_SIZE);

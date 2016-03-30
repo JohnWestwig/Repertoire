@@ -9,6 +9,7 @@ if (!isset($_SESSION['username'])) {
 <head>
 	<script src="https://ajax.googleapis.com/ajax/libs/jquery/2.2.0/jquery.min.js"></script>
 	<script src="scripts/home.js"></script>
+	<script src="scripts/serialize.js"></script>
 	<link rel="stylesheet" type="text/css" href="stylesheets/home.css">
 	<meta charset="utf-8" />
 	<title>My Repertoire</title>
